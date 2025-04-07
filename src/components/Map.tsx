@@ -26,7 +26,7 @@ const Map: React.FC<MapProps> = () => {
     const { selectedSearch, setSelectedSearch } = useSelectedSearch();
 
     const markerIcon = L.icon({
-        iconUrl: "./marker.svg",
+        iconUrl: "./src/assets/marker.svg",
         iconSize: [24, 24],
         iconAnchor: [11, 24],
         popupAnchor: [0, -30],
