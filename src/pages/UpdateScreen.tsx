@@ -63,7 +63,7 @@ export const UpdateScreen: React.FC = () => {
             return;
         }
         const newLandmark = {
-            id: Math.random(),
+            id: selectedMarker.id,
             lat: selectedMarker ? selectedMarker.lat : 0,
             lng: selectedMarker ? selectedMarker.lng : 0,
             name,
@@ -81,7 +81,7 @@ export const UpdateScreen: React.FC = () => {
             setIsErrorDelete(true);
             return;
         }
-        removeLandmark(selectedMarker.lat, selectedMarker.lng);
+        removeLandmark(selectedMarker.id);
         setName("");
         setType("");
         setDescription("");

@@ -152,6 +152,7 @@ const Map: React.FC<MapProps> = () => {
                                 lng: landmark.lng,
                             });
                             setSelectedMarker({
+                                id: landmark.id,
                                 lat: landmark.lat,
                                 lng: landmark.lng,
                                 name: landmark.name,
