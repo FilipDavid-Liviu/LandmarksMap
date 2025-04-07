@@ -1,0 +1,44 @@
+body,
+input,
+textarea,
+button,
+label,
+.field-input,
+.field-textarea {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+        "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+        "Helvetica Neue", sans-serif;
+}
+
+.no-screen-container {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+}
+
+.no-screen-container .main-content {
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+    margin-left: 76px;
+}
+
+.no-screen-container .map-background {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.no-screen-container .form-section {
+    position: absolute;
+    top: 0;
+    width: 30%;
+    height: 0;
+    background-color: #f0fef5cc;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    z-index: 900;
+}
+
+.no-screen-container .search-bar {
+    margin: 3% 8%;
+}

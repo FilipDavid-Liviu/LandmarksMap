@@ -1,0 +1,34 @@
+/* Ensure the map container takes up the full viewport */
+.leaflet-container {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    cursor: default;
+}
+  
+  /* Customize popup appearance */
+.leaflet-popup-content {
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    color: #333;
+}
+  
+/* Customize marker appearance if using custom icons */
+.leaflet-marker-icon {
+    filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.2));
+    
+}
+  
+/* Improve zoom control visibility */
+.leaflet-control-zoom {
+    display: none;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 5px;
+    padding: 5px;
+}
+  
+/* Improve map tile appearance */
+.leaflet-tile {
+    filter: contrast(1.1) brightness(0.9);
+}
