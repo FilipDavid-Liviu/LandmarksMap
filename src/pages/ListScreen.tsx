@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./FullScreen.css";
 import { Search, X } from "lucide-react";
 import { useLandmarks } from "../contexts/LandmarkContext.tsx";
@@ -6,34 +6,18 @@ import { useLandmarks } from "../contexts/LandmarkContext.tsx";
 const itemsPerPage = 8;
 
 export const ListScreen: React.FC = () => {
-    const { landmarks } = useLandmarks();
+    const { landmarks, fetchFilteredSortedLandmarks } = useLandmarks();
 
     const [search, setSearch] = useState("");
-    const isMatch = (landmark: any, search: string) => {
-        const query = search.toLowerCase();
-        const nameType = (landmark.name + " " + landmark.type).toLowerCase();
-        const typeName = (landmark.type + " " + landmark.name).toLowerCase();
-        return nameType.includes(query) || typeName.includes(query);
-    };
-    const sortByLatitude = (landmarks: any) => {
-        return landmarks.slice().sort((a: any, b: any) => b.lat - a.lat);
-    };
-    const sortByDistanceToEquator = (landmarks: any) => {
-        return landmarks
-            .slice()
-            .sort((a: any, b: any) => Math.abs(b.lat) - Math.abs(a.lat));
-    };
     const [isSorted, setIsSorted] = useState(false);
     const [isSortedByEquator, setIsSortedByEquator] = useState(false);
     const [useBackgroundColor, setUseBackgroundColor] = useState(false);
-    let filteredLandmarks = landmarks.filter((landmark) =>
-        isMatch(landmark, search)
-    );
-    if (isSorted) {
-        filteredLandmarks = isSortedByEquator
-            ? sortByDistanceToEquator(filteredLandmarks)
-            : sortByLatitude(filteredLandmarks);
-    }
+    useEffect(() => {
+        fetchFilteredSortedLandmarks(
+            search,
+            isSorted ? (isSortedByEquator ? 2 : 1) : 0
+        );
+    }, [search, isSorted, isSortedByEquator]);
     const getBackgroundColor = (lat: number) => {
         const normalizedValue = (90 - Math.abs(lat)) / 90;
         const r = Math.floor(255 * normalizedValue);
@@ -43,10 +27,10 @@ export const ListScreen: React.FC = () => {
     };
 
     const [currentPage, setCurrentPage] = useState(1);
-    const totalPages = Math.ceil(filteredLandmarks.length / itemsPerPage);
+    const totalPages = Math.ceil(landmarks.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const displayedLandmarks = filteredLandmarks.slice(startIndex, endIndex);
+    const displayedLandmarks = landmarks.slice(startIndex, endIndex);
     return (
         <div className="full-screen-container">
             <div className="main-content">
@@ -186,6 +170,9 @@ export const ListScreen: React.FC = () => {
                                     >
                                         Next
                                     </button>
+                                </div>
+                                <div className="pagination">
+                                    <span>Items per page: {itemsPerPage}</span>
                                 </div>
                             </div>
                         </div>

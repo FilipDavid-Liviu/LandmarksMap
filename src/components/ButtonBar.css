@@ -30,6 +30,22 @@
     background-color: #ece9d5;
 }
 
+.button-bar a.con {
+    cursor: default;
+    margin-top: auto;
+    transition: none;
+    background: none;
+}
+
+.button-bar a.con img {
+    filter: invert(17%) sepia(94%) saturate(7484%) hue-rotate(0deg)
+        brightness(97%) contrast(108%);
+}
+
+.button-bar a.con:hover {
+    background-color: default;
+}
+
 .button-bar .icon {
     width: 40px;
     height: 40px;

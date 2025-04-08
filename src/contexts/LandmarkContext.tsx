@@ -16,56 +16,69 @@ interface Landmark {
     type: string;
     description: string;
 }
-
 const LandmarkContext = createContext<{
     landmarks: Landmark[];
     addLandmark: (landmark: Landmark) => void;
     removeLandmark: (id: number) => void;
     updateLandmark: (landmark: Landmark) => void;
-    getLandmark: (lat: number, lng: number) => Landmark | undefined;
+    fetchFilteredSortedLandmarks: (
+        search: string,
+        sort: number
+    ) => Promise<void>;
+    isServerUp: boolean;
 }>({
     landmarks: [],
     addLandmark: () => {},
     removeLandmark: () => {},
     updateLandmark: () => {},
-    getLandmark: () => undefined,
+    fetchFilteredSortedLandmarks: async () => {},
+    isServerUp: false,
 });
 
 export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
-    const [landmarks, setLandmarks] = useState<Landmark[]>([]);
-    useEffect(() => {
-        fetch(`${API_URL}/get_all`)
-            .then((res) => res.json())
-            .then((data) => setLandmarks(data))
-            .catch((err) => console.error("Failed to load landmarks", err));
-    }, []);
     const [isServerUp, setIsServerUp] = useState(false);
     const wasServerUpRef = useRef(false);
+    const hasLoadedOfflineLandmarks = useRef(false);
+    const [landmarks, setLandmarks] = useState<Landmark[]>([]);
+    useEffect(() => {
+        const stored = localStorage.getItem("offlineQueue");
+        console.log("Server is down, loading offline landmarks...");
+        if (stored) {
+            const operations = JSON.parse(stored);
+            console.log("Server is down, loading offline landmarks...2");
+            const addedLandmarks = operations
+                .filter((op: Operation) => op.type === "add")
+                .map((op: any) => op.landmark);
+            console.log(addedLandmarks);
+            setLandmarks(addedLandmarks);
+        }
+        hasLoadedOfflineLandmarks.current = true;
+    }, []);
+
+    const checkServer = async () => {
+        try {
+            const res = await fetch(`${API_URL}/health`);
+            const serverIsUp = res.ok;
+            if (!wasServerUpRef.current && serverIsUp) {
+                console.log("Server is up, fetching landmarks...");
+                const data = await fetch(`${API_URL}/get_all`);
+                const landmarks = await data.json();
+                setLandmarks(landmarks);
+            }
+            wasServerUpRef.current = serverIsUp;
+            setIsServerUp(serverIsUp);
+        } catch (err) {
+            wasServerUpRef.current = false;
+            setIsServerUp(false);
+        }
+    };
 
     useEffect(() => {
-        const checkServer = async () => {
-            try {
-                const res = await fetch(`${API_URL}/health`);
-                const serverIsUp = res.ok;
-                if (!wasServerUpRef.current && serverIsUp) {
-                    console.log("Server is up, fetching landmarks...");
-                    const data = await fetch(`${API_URL}/get_all`);
-                    const landmarks = await data.json();
-                    setLandmarks(landmarks);
-                }
-                wasServerUpRef.current = serverIsUp;
-                setIsServerUp(serverIsUp);
-            } catch (err) {
-                wasServerUpRef.current = false;
-                setIsServerUp(false);
-            }
-        };
-
+        console.log(localStorage.getItem("offlineLandmarks"));
         checkServer();
         const interval = setInterval(checkServer, 10000);
-
         return () => clearInterval(interval);
     }, []);
 
@@ -118,7 +131,9 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     useEffect(() => {
-        if (!isServerUp) return;
+        if (!isServerUp) {
+            return;
+        }
 
         const sync = async () => {
             const queue: Operation[] = JSON.parse(
@@ -240,10 +255,60 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     };
 
-    const getLandmark = (lat: number, lng: number) => {
-        return landmarks.find(
-            (landmark) => landmark.lat === lat && landmark.lng === lng
+    const fetchFilteredSortedLandmarks = async (
+        search: string,
+        sort: number
+    ): Promise<void> => {
+        if (!isServerUp) {
+            const filteredLandmarks = getSearchQueryWithSorting(search, sort);
+            setLandmarks(filteredLandmarks);
+            return;
+        }
+        const params = new URLSearchParams();
+        if (search) params.append("search", search);
+        if (sort !== 0) params.append("sort", sort.toString());
+
+        try {
+            const res = await fetch(`${API_URL}/get_all?${params.toString()}`);
+            const data = await res.json();
+            setLandmarks(data);
+        } catch (err) {
+            console.error(err);
+            setIsServerUp(false);
+            const filteredLandmarks = getSearchQueryWithSorting(search, sort);
+            setLandmarks(filteredLandmarks);
+        }
+    };
+
+    const getSearchQueryWithSorting = (
+        search: string,
+        sort: number
+    ): Landmark[] => {
+        const filteredLandmarks = landmarks.filter((landmark) =>
+            isMatch(landmark, search)
         );
+        if (sort === 1) {
+            return sortByLatitude(filteredLandmarks);
+        } else if (sort === 2) {
+            return sortByDistanceToEquator(filteredLandmarks);
+        } else {
+            return filteredLandmarks;
+        }
+    };
+
+    const isMatch = (landmark: any, search: string) => {
+        const query = search.toLowerCase();
+        const nameType = (landmark.name + " " + landmark.type).toLowerCase();
+        const typeName = (landmark.type + " " + landmark.name).toLowerCase();
+        return nameType.includes(query) || typeName.includes(query);
+    };
+    const sortByLatitude = (landmarks: any) => {
+        return landmarks.slice().sort((a: any, b: any) => b.lat - a.lat);
+    };
+    const sortByDistanceToEquator = (landmarks: any) => {
+        return landmarks
+            .slice()
+            .sort((a: any, b: any) => Math.abs(b.lat) - Math.abs(a.lat));
     };
 
     return (
@@ -253,7 +318,8 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
                 addLandmark,
                 removeLandmark,
                 updateLandmark,
-                getLandmark,
+                fetchFilteredSortedLandmarks,
+                isServerUp,
             }}
         >
             {children}
