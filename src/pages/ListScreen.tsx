@@ -6,7 +6,7 @@ import { useLandmarks } from "../contexts/LandmarkContext.tsx";
 const itemsPerPage = 8;
 
 export const ListScreen: React.FC = () => {
-    const { landmarks, fetchFilteredSortedLandmarks } = useLandmarks();
+    const { searched, fetchFilteredSortedLandmarks } = useLandmarks();
 
     const [search, setSearch] = useState("");
     const [isSorted, setIsSorted] = useState(false);
@@ -27,10 +27,10 @@ export const ListScreen: React.FC = () => {
     };
 
     const [currentPage, setCurrentPage] = useState(1);
-    const totalPages = Math.ceil(landmarks.length / itemsPerPage);
+    const totalPages = Math.ceil(searched.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const displayedLandmarks = landmarks.slice(startIndex, endIndex);
+    const displayedLandmarks = searched.slice(startIndex, endIndex);
     return (
         <div className="full-screen-container">
             <div className="main-content">
@@ -151,7 +151,7 @@ export const ListScreen: React.FC = () => {
                                 <div className="pagination">
                                     <button
                                         className="page-button"
-                                        disabled={currentPage === 1}
+                                        disabled={currentPage <= 1}
                                         onClick={() =>
                                             setCurrentPage((prev) => prev - 1)
                                         }
@@ -163,7 +163,7 @@ export const ListScreen: React.FC = () => {
                                     </span>
                                     <button
                                         className="page-button"
-                                        disabled={currentPage === totalPages}
+                                        disabled={currentPage >= totalPages}
                                         onClick={() =>
                                             setCurrentPage((prev) => prev + 1)
                                         }

@@ -1,37 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import "./SearchBar.css";
 import { useLandmarks } from "../contexts/LandmarkContext";
 import { useSelectedSearch } from "../contexts/SelectedSearchContext";
 
 const SearchBar = () => {
-    const [query, setQuery] = useState("");
+    const [search, setSearch] = useState("");
     const [showDropdown, setShowDropdown] = useState(false);
 
-    const { landmarks } = useLandmarks();
+    const { searched, fetchSearchedLandmarks } = useLandmarks();
     const { setSelectedSearch } = useSelectedSearch();
 
-    const normalizeName = (name: string) => name.toLowerCase();
-
-    const filteredSuggestions = landmarks.filter((landmark) =>
-        normalizeName(landmark.name).includes(normalizeName(query))
-    );
+    useEffect(() => {
+        fetchSearchedLandmarks(search);
+    }, [search]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "Enter") {
-            if (filteredSuggestions.length === 1) {
-                const match = filteredSuggestions[0];
-                setQuery(match.name);
+            if (searched.length === 1) {
+                const match = searched[0];
+                setSearch(match.name);
                 setShowDropdown(false);
                 setSelectedSearch(match);
             } else {
-                const match = filteredSuggestions.find(
+                const match = searched.find(
                     (landmark) =>
-                        normalizeName(landmark.name) === normalizeName(query)
+                        landmark.name.toLowerCase() === search.toLowerCase()
                 );
 
                 if (match) {
-                    setQuery(match.name);
+                    setSearch(match.name);
                     setShowDropdown(false);
                     setSelectedSearch(match);
                 }
@@ -43,15 +41,15 @@ const SearchBar = () => {
             <div className="searchbar__input-container">
                 <input
                     type="text"
-                    value={query}
+                    value={search}
                     onChange={(e) => {
                         const newQuery = e.target.value;
-                        setQuery(newQuery);
-                        const newFilteredSuggestions = landmarks
+                        setSearch(newQuery);
+                        const newFilteredSuggestions = searched
                             .filter((landmark) =>
-                                normalizeName(landmark.name).includes(
-                                    normalizeName(newQuery)
-                                )
+                                landmark.name
+                                    .toLowerCase()
+                                    .includes(newQuery.toLowerCase())
                             )
                             .slice(0, 3);
                         setShowDropdown(
@@ -63,11 +61,11 @@ const SearchBar = () => {
                     placeholder="Search name"
                     className="searchbar__input"
                 />
-                {query ? (
+                {search ? (
                     <X
                         className="searchbar__icon"
                         onClick={() => {
-                            setQuery("");
+                            setSearch("");
                             setShowDropdown(false);
                         }}
                     />
@@ -77,12 +75,12 @@ const SearchBar = () => {
             </div>
             {showDropdown && (
                 <ul className="searchbar__dropdown">
-                    {filteredSuggestions.map((landmark, index) => (
+                    {searched.map((landmark, index) => (
                         <li
                             key={index}
                             className="searchbar__dropdown-item"
                             onClick={() => {
-                                setQuery(landmark.name);
+                                setSearch(landmark.name);
                                 setShowDropdown(false);
                                 setSelectedSearch(landmark);
                             }}

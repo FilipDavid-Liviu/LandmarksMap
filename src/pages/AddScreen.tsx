@@ -58,7 +58,7 @@ export const AddScreen: React.FC = () => {
             return;
         }
         const newLandmark = {
-            id: Math.random(),
+            id: Math.random() / 2,
             lat: markerPosition.lat,
             lng: markerPosition.lng,
             name,

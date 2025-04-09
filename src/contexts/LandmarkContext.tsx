@@ -26,6 +26,8 @@ const LandmarkContext = createContext<{
         sort: number
     ) => Promise<void>;
     isServerUp: boolean;
+    fetchSearchedLandmarks: (search: string) => Promise<void>;
+    searched: Landmark[];
 }>({
     landmarks: [],
     addLandmark: () => {},
@@ -33,6 +35,8 @@ const LandmarkContext = createContext<{
     updateLandmark: () => {},
     fetchFilteredSortedLandmarks: async () => {},
     isServerUp: false,
+    fetchSearchedLandmarks: async () => {},
+    searched: [],
 });
 
 export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -255,13 +259,15 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     };
 
+    const [searched, setSearched] = useState<Landmark[]>([]);
+
     const fetchFilteredSortedLandmarks = async (
         search: string,
         sort: number
     ): Promise<void> => {
         if (!isServerUp) {
             const filteredLandmarks = getSearchQueryWithSorting(search, sort);
-            setLandmarks(filteredLandmarks);
+            setSearched(filteredLandmarks);
             return;
         }
         const params = new URLSearchParams();
@@ -269,14 +275,16 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
         if (sort !== 0) params.append("sort", sort.toString());
 
         try {
-            const res = await fetch(`${API_URL}/get_all?${params.toString()}`);
+            const res = await fetch(
+                `${API_URL}/get_all_name_type_sort?${params.toString()}`
+            );
             const data = await res.json();
-            setLandmarks(data);
+            setSearched(data);
         } catch (err) {
             console.error(err);
             setIsServerUp(false);
             const filteredLandmarks = getSearchQueryWithSorting(search, sort);
-            setLandmarks(filteredLandmarks);
+            setSearched(filteredLandmarks);
         }
     };
 
@@ -311,6 +319,39 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
             .sort((a: any, b: any) => Math.abs(b.lat) - Math.abs(a.lat));
     };
 
+    const fetchSearchedLandmarks = async (search: string): Promise<void> => {
+        if (!isServerUp) {
+            const filteredLandmarks = getSearch(search);
+            setSearched(filteredLandmarks);
+            return;
+        }
+        const params = new URLSearchParams();
+        if (search) params.append("search", search);
+
+        try {
+            const res = await fetch(
+                `${API_URL}/get_all_name?${params.toString()}`
+            );
+            const data = await res.json();
+            setSearched(data);
+        } catch (err) {
+            console.error(err);
+            setIsServerUp(false);
+            const filteredLandmarks = getSearch(search);
+            setSearched(filteredLandmarks);
+        }
+    };
+    const getSearch = (search: string): Landmark[] => {
+        const filteredLandmarks = landmarks.filter((landmark) =>
+            isMatchName(landmark, search)
+        );
+        return filteredLandmarks;
+    };
+    const isMatchName = (landmark: any, search: string) => {
+        const query = search.toLowerCase();
+        const nameType = landmark.name.toLowerCase();
+        return nameType.includes(query);
+    };
     return (
         <LandmarkContext.Provider
             value={{
@@ -320,6 +361,8 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
                 updateLandmark,
                 fetchFilteredSortedLandmarks,
                 isServerUp,
+                fetchSearchedLandmarks,
+                searched,
             }}
         >
             {children}
