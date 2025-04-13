@@ -3,6 +3,7 @@ import { Search, X } from "lucide-react";
 import "./SearchBar.css";
 import { useLandmarks } from "../contexts/LandmarkContext";
 import { useSelectedSearch } from "../contexts/SelectedSearchContext";
+import { useSelectedMarker } from "../contexts/SelectedMarkerContext";
 
 const SearchBar = () => {
     const [search, setSearch] = useState("");
@@ -10,6 +11,7 @@ const SearchBar = () => {
 
     const { searched, fetchSearchedLandmarks } = useLandmarks();
     const { setSelectedSearch } = useSelectedSearch();
+    const { setSelectedMarker } = useSelectedMarker();
 
     useEffect(() => {
         fetchSearchedLandmarks(search);
@@ -22,6 +24,7 @@ const SearchBar = () => {
                 setSearch(match.name);
                 setShowDropdown(false);
                 setSelectedSearch(match);
+                setSelectedMarker(match);
             } else {
                 const match = searched.find(
                     (landmark) =>
@@ -32,6 +35,7 @@ const SearchBar = () => {
                     setSearch(match.name);
                     setShowDropdown(false);
                     setSelectedSearch(match);
+                    setSelectedMarker(match);
                 }
             }
         }
@@ -83,6 +87,7 @@ const SearchBar = () => {
                                 setSearch(landmark.name);
                                 setShowDropdown(false);
                                 setSelectedSearch(landmark);
+                                setSelectedMarker(landmark);
                             }}
                         >
                             {landmark.name}

@@ -1,5 +1,6 @@
 import React from "react";
 import SearchBar from "../components/SearchBar";
+import InfoCard from "../components/InfoCard";
 import "./NoScreen.css";
 
 export const FreeRoamScreen: React.FC = () => {
@@ -14,6 +15,7 @@ export const FreeRoamScreen: React.FC = () => {
                         <div className="search-bar">
                             <SearchBar />
                         </div>
+                        <InfoCard />
                     </div>
                 </div>
             </div>

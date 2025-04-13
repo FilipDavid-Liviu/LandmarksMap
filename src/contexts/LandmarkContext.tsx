@@ -5,10 +5,9 @@ import React, {
     useEffect,
     useRef,
 } from "react";
-
 const API_URL = "http://localhost:8000";
 
-interface Landmark {
+export interface Landmark {
     id: number;
     lat: number;
     lng: number;
@@ -82,7 +81,7 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
     useEffect(() => {
         console.log(localStorage.getItem("offlineLandmarks"));
         checkServer();
-        const interval = setInterval(checkServer, 10000);
+        const interval = setInterval(checkServer, 5000);
         return () => clearInterval(interval);
     }, []);
 
@@ -352,6 +351,7 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
         const nameType = landmark.name.toLowerCase();
         return nameType.includes(query);
     };
+
     return (
         <LandmarkContext.Provider
             value={{
