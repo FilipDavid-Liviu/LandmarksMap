@@ -64,13 +64,37 @@ export const AddScreen: React.FC = () => {
             name,
             type,
             description,
+            image,
         };
         addLandmark(newLandmark);
         setName("");
         setType("");
         setDescription("");
         setMarkerPosition(null);
+        handleDeleteImage();
     };
+
+    const [image, setImage] = useState<string | File | undefined>(undefined);
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            const file = e.target.files[0];
+            if (file) {
+                setImage(file);
+            }
+        }
+    };
+
+    const handleDeleteImage = () => {
+        setImage(undefined);
+        const inputElement = document.querySelector(
+            'input[type="file"]'
+        ) as HTMLInputElement;
+        if (inputElement) {
+            inputElement.value = "";
+        }
+    };
+
     return (
         <div className="half-screen-container">
             {/* Main Content */}
@@ -119,7 +143,17 @@ export const AddScreen: React.FC = () => {
 
                             {/* Right Column */}
                             <div className="right-column">
-                                {/* Add Landmark Button */}
+                                <div className="single-column">
+                                    <label className="field-label">
+                                        Upload Images
+                                    </label>
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg, image/png"
+                                        onChange={handleImageUpload}
+                                    />
+                                </div>
+                                {/* Error Message */}
                                 <p
                                     className={`error-message ${
                                         isError ? "" : "inv"
@@ -127,6 +161,7 @@ export const AddScreen: React.FC = () => {
                                 >
                                     {errorText}
                                 </p>
+                                {/* Add Landmark Button */}
                                 <div className="button-container">
                                     <button
                                         className="btn-outline"
@@ -156,6 +191,28 @@ export const AddScreen: React.FC = () => {
                                 }}
                             />
                         </div>
+                    </div>
+                    <div className="image-preview-container">
+                        {image && (
+                            <>
+                                <img
+                                    src={
+                                        typeof image === "string"
+                                            ? image
+                                            : URL.createObjectURL(image)
+                                    }
+                                    alt="preview"
+                                    className="preview-image"
+                                />
+                                <button
+                                    type="button"
+                                    className="delete-button"
+                                    onClick={handleDeleteImage}
+                                >
+                                    ✖
+                                </button>
+                            </>
+                        )}
                     </div>
                     <div className="button-charts-container">
                         <label

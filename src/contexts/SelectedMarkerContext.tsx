@@ -8,6 +8,7 @@ interface SelectedMarkerContextType {
         name: string;
         type: string;
         description: string;
+        image?: string | File;
     } | null;
     setSelectedMarker: (
         marker: {
@@ -17,6 +18,7 @@ interface SelectedMarkerContextType {
             name: string;
             type: string;
             description: string;
+            image?: string | File;
         } | null
     ) => void;
 }
@@ -35,6 +37,7 @@ export const SelectedMarkerProvider: React.FC<{
         name: string;
         type: string;
         description: string;
+        image?: string | File;
     } | null>(null);
 
     return (

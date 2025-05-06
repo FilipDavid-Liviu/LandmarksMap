@@ -22,11 +22,17 @@ type MapProps = {};
 
 const Map: React.FC<MapProps> = () => {
     const { landmarks } = useLandmarks();
-    const { setSelectedMarker } = useSelectedMarker();
+    const { selectedMarker, setSelectedMarker } = useSelectedMarker();
     const { selectedSearch, setSelectedSearch } = useSelectedSearch();
 
     const markerIcon = L.icon({
         iconUrl: "./src/assets/marker.svg",
+        iconSize: [24, 24],
+        iconAnchor: [11, 24],
+        popupAnchor: [0, -30],
+    });
+    const selectedMarkerIcon = L.icon({
+        iconUrl: "./src/assets/marker2.svg",
         iconSize: [24, 24],
         iconAnchor: [11, 24],
         popupAnchor: [0, -30],
@@ -79,9 +85,11 @@ const Map: React.FC<MapProps> = () => {
             if (location.pathname !== "/add" && location.pathname !== "/list") {
                 if (position) {
                     if (location.pathname !== "/update") {
+                        const zoom = map.getZoom();
+                        const offset = zoom > 10 ? 0 : 0.3;
                         map.flyTo(
-                            [position.lat, position.lng],
-                            Math.max(10, map.getZoom()),
+                            [position.lat, position.lng - offset],
+                            Math.max(10, zoom),
                             {
                                 duration: 1.5,
                             }
@@ -92,9 +100,11 @@ const Map: React.FC<MapProps> = () => {
                         }, 500);
                         return () => clearTimeout(timeout);
                     } else {
+                        const zoom = map.getZoom();
+                        const offset = zoom > 10 ? 0 : 0.25;
                         map.flyTo(
-                            [position.lat + 0.25, position.lng],
-                            Math.max(10, map.getZoom()),
+                            [position.lat + offset, position.lng],
+                            Math.max(10, zoom),
                             {
                                 duration: 1.5,
                             }
@@ -106,6 +116,9 @@ const Map: React.FC<MapProps> = () => {
                         return () => clearTimeout(timeout);
                     }
                 }
+            }
+            if (location.pathname == "/add") {
+                setSelectedMarker(null);
             }
         }, [position, map, setPosition]);
 
@@ -144,35 +157,44 @@ const Map: React.FC<MapProps> = () => {
                 <Marker
                     key={landmark.id}
                     position={[landmark.lat, landmark.lng]}
-                    icon={markerIcon}
+                    icon={
+                        selectedMarker?.id === landmark.id
+                            ? selectedMarkerIcon
+                            : markerIcon
+                    }
                     eventHandlers={{
                         click: () => {
-                            setSelectedPosition({
-                                lat: landmark.lat,
-                                lng: landmark.lng,
-                            });
-                            setSelectedMarker({
-                                id: landmark.id,
-                                lat: landmark.lat,
-                                lng: landmark.lng,
-                                name: landmark.name,
-                                type: landmark.type,
-                                description: landmark.description,
-                            });
+                            if (location.pathname !== "/add") {
+                                setSelectedPosition({
+                                    lat: landmark.lat,
+                                    lng: landmark.lng,
+                                });
+                                setSelectedMarker({
+                                    id: landmark.id,
+                                    lat: landmark.lat,
+                                    lng: landmark.lng,
+                                    name: landmark.name,
+                                    type: landmark.type,
+                                    description: landmark.description,
+                                    image: landmark.image,
+                                });
+                            }
                         },
                     }}
                 >
-                    <Popup>
-                        {landmark.name} ({landmark.type}):
-                        <span style={{ fontWeight: "500" }}>
-                            {" "}
-                            {landmark.description}
-                        </span>
-                    </Popup>
+                    {location.pathname !== "/" && (
+                        <Popup>
+                            {landmark.name} ({landmark.type}):
+                            <span style={{ fontWeight: "500" }}>
+                                {" "}
+                                {landmark.description}
+                            </span>
+                        </Popup>
+                    )}
                 </Marker>
             ))}
             {markerPosition && (
-                <Marker position={markerPosition} icon={markerIcon}>
+                <Marker position={markerPosition} icon={selectedMarkerIcon}>
                     <Popup>Position for the new Landmark</Popup>
                 </Marker>
             )}

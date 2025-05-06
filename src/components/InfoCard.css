@@ -18,7 +18,19 @@
 
 .infocard__image-placeholder {
     width: 100%;
-    aspect-ratio: 4 / 2.75;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 0.5rem;
+}
+
+.infocard__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
 }
 
 .infocard__firstpart {

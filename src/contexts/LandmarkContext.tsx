@@ -14,6 +14,7 @@ export interface Landmark {
     name: string;
     type: string;
     description: string;
+    image?: string | File;
 }
 const LandmarkContext = createContext<{
     landmarks: Landmark[];
@@ -69,6 +70,7 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
                 const data = await fetch(`${API_URL}/get_all`);
                 const landmarks = await data.json();
                 setLandmarks(landmarks);
+                console.log(landmarks);
             }
             wasServerUpRef.current = serverIsUp;
             setIsServerUp(serverIsUp);
@@ -161,8 +163,12 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const addLandmark = async (landmark: Landmark) => {
         if (!isServerUp) {
-            enqueueOperation({ type: "add", landmark });
-            setLandmarks((prev) => [...prev, landmark]);
+            const offlineLandmark = { ...landmark };
+            if (offlineLandmark.image instanceof File) {
+                delete offlineLandmark.image;
+            }
+            enqueueOperation({ type: "add", landmark: offlineLandmark });
+            setLandmarks((prev) => [...prev, offlineLandmark]);
             return;
         }
 
@@ -170,12 +176,37 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
             const res = await fetch(`${API_URL}/add`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(landmark),
+                body: JSON.stringify({
+                    lat: landmark.lat,
+                    lng: landmark.lng,
+                    name: landmark.name,
+                    type: landmark.type,
+                    description: landmark.description,
+                }),
             });
 
             if (!res.ok) throw new Error("Failed to add landmark");
 
             const newLandmark: Landmark = await res.json();
+            if (landmark.image instanceof File) {
+                const formData = new FormData();
+                formData.append("file", landmark.image);
+
+                const photoRes = await fetch(
+                    `${API_URL}/upload_photo/${newLandmark.id}`,
+                    {
+                        method: "POST",
+                        body: formData,
+                    }
+                );
+
+                if (photoRes.ok) {
+                    const { image } = await photoRes.json();
+                    newLandmark.image = image;
+                } else {
+                    throw new Error("Failed to upload image");
+                }
+            }
             setLandmarks((prev) => [...prev, newLandmark]);
         } catch (err) {
             console.error(err);
@@ -218,9 +249,13 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const updateLandmark = async (landmark: Landmark) => {
         if (!isServerUp) {
-            enqueueOperation({ type: "update", landmark });
+            const offlineLandmark = { ...landmark };
+            if (offlineLandmark.image instanceof File) {
+                delete offlineLandmark.image;
+            }
+            enqueueOperation({ type: "update", landmark: offlineLandmark });
             setLandmarks((prev) =>
-                prev.map((l) => (l.id === landmark.id ? landmark : l))
+                prev.map((l) => (l.id === landmark.id ? offlineLandmark : l))
             );
             return;
         }
@@ -240,6 +275,43 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
             if (!res.ok) throw new Error("Failed to update landmark");
 
             const updated: Landmark = await res.json();
+
+            if (landmark.image instanceof File) {
+                // If it's a File, upload it
+                const formData = new FormData();
+                formData.append("file", landmark.image);
+
+                const photoRes = await fetch(
+                    `${API_URL}/upload_photo/${updated.id}`,
+                    {
+                        method: "POST",
+                        body: formData,
+                    }
+                );
+
+                if (photoRes.ok) {
+                    const { image } = await photoRes.json();
+                    updated.image = image;
+                } else {
+                    throw new Error("Failed to upload image");
+                }
+            } else if (typeof landmark.image === "string") {
+                // If it's a string, just set the image URL (no upload)
+                updated.image = landmark.image;
+            } else if (landmark.image === undefined) {
+                // If it's undefined, delete the photo
+                const deleteRes = await fetch(
+                    `${API_URL}/delete_photo/${updated.id}`,
+                    {
+                        method: "DELETE",
+                    }
+                );
+                if (!deleteRes.ok) {
+                    throw new Error("Failed to delete image");
+                }
+                updated.image = undefined;
+            }
+
             setLandmarks((prev) =>
                 prev.map((l) => (l.id === updated.id ? updated : l))
             );

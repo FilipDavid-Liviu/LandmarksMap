@@ -69,12 +69,14 @@ export const UpdateScreen: React.FC = () => {
             name,
             type,
             description,
+            image,
         };
         updateLandmark(newLandmark);
         setName("");
         setType("");
         setDescription("");
         setSelectedMarker(null);
+        handleDeleteImage();
     };
     const handleRemoveLandmark = () => {
         if (!selectedMarker) {
@@ -86,19 +88,44 @@ export const UpdateScreen: React.FC = () => {
         setType("");
         setDescription("");
         setSelectedMarker(null);
+        handleDeleteImage();
     };
 
     useEffect(() => {
         if (selectedMarker) {
+            console.log("Selected marker:", selectedMarker);
             setName(selectedMarker.name);
             setType(selectedMarker.type);
-            setDescription(selectedMarker.description);
+            setDescription(selectedMarker.description + selectedMarker.image);
+            setImage(selectedMarker.image ?? undefined);
         } else {
             setName("");
             setType("");
             setDescription("");
+            handleDeleteImage();
         }
     }, [selectedMarker]);
+
+    const [image, setImage] = useState<string | File | undefined>(undefined);
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            const file = e.target.files[0];
+            if (file) {
+                setImage(file);
+            }
+        }
+    };
+
+    const handleDeleteImage = () => {
+        setImage(undefined);
+        const inputElement = document.querySelector(
+            'input[type="file"]'
+        ) as HTMLInputElement;
+        if (inputElement) {
+            inputElement.value = "";
+        }
+    };
 
     return (
         <div className="half-screen-container">
@@ -149,6 +176,16 @@ export const UpdateScreen: React.FC = () => {
 
                             {/* Right Column */}
                             <div className="right-column">
+                                <div className="single-column">
+                                    <label className="field-label">
+                                        Upload Images
+                                    </label>
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg, image/png"
+                                        onChange={handleImageUpload}
+                                    />
+                                </div>
                                 {/* Update Delete Landmark Buttons */}
                                 <div className="button-container">
                                     <div className="button-error-pair">
@@ -221,6 +258,28 @@ export const UpdateScreen: React.FC = () => {
                     ) : (
                         <span />
                     )}
+                    <div className="image-preview-container">
+                        {image && (
+                            <>
+                                <img
+                                    src={
+                                        typeof image === "string"
+                                            ? image
+                                            : URL.createObjectURL(image)
+                                    }
+                                    alt="preview"
+                                    className="preview-image"
+                                />
+                                <button
+                                    type="button"
+                                    className="delete-button"
+                                    onClick={handleDeleteImage}
+                                >
+                                    ✖
+                                </button>
+                            </>
+                        )}
+                    </div>
                     <div className="button-charts-container">
                         <label
                             className={`checkbox-label ${
