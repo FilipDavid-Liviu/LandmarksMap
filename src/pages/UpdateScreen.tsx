@@ -96,7 +96,7 @@ export const UpdateScreen: React.FC = () => {
             console.log("Selected marker:", selectedMarker);
             setName(selectedMarker.name);
             setType(selectedMarker.type);
-            setDescription(selectedMarker.description + selectedMarker.image);
+            setDescription(selectedMarker.description);
             setImage(selectedMarker.image ?? undefined);
         } else {
             setName("");

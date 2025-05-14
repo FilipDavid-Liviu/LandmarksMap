@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "./FullScreen.css";
 import { Search, X } from "lucide-react";
 import { useLandmarks } from "../contexts/LandmarkContext.tsx";
+import { useSelectedMarker } from "../contexts/SelectedMarkerContext.tsx";
+import { useSelectedLocation } from "../contexts/SelectedLocationContext.tsx";
 
 const itemsPerPage = 8;
 
@@ -31,6 +34,15 @@ export const ListScreen: React.FC = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const displayedLandmarks = searched.slice(startIndex, endIndex);
+
+    const { setSelectedMarker } = useSelectedMarker();
+    const { setSelectedLocation } = useSelectedLocation();
+    const navigate = useNavigate();
+    const handleLandmarkClick = (landmark: any) => {
+        setSelectedMarker(landmark);
+        setSelectedLocation(landmark);
+        navigate("/");
+    };
     return (
         <div className="full-screen-container">
             <div className="main-content">
@@ -120,7 +132,7 @@ export const ListScreen: React.FC = () => {
                                             (landmark: any, index: number) => (
                                                 <li
                                                     key={index}
-                                                    className="landmark-item"
+                                                    className="landmark-item clickable"
                                                     style={{
                                                         backgroundColor:
                                                             useBackgroundColor
@@ -133,6 +145,11 @@ export const ListScreen: React.FC = () => {
                                                                 ? "black"
                                                                 : "",
                                                     }}
+                                                    onClick={() =>
+                                                        handleLandmarkClick(
+                                                            landmark
+                                                        )
+                                                    }
                                                 >
                                                     <b>{landmark.name}</b> (
                                                     {landmark.type}) :{" "}

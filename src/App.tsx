@@ -6,6 +6,7 @@ import { AddScreen } from "./pages/AddScreen.tsx";
 import { UpdateScreen } from "./pages/UpdateScreen.tsx";
 import { ListScreen } from "./pages/ListScreen.tsx";
 import { FreeRoamScreen } from "./pages/FreeRoamScreen.tsx";
+import { ProfileScreen } from "./pages/ProfileScreen.tsx";
 
 function App() {
     return (
@@ -19,7 +20,7 @@ function App() {
                 <Route path="/add" element={<AddScreen />} />
                 <Route path="/update" element={<UpdateScreen />} />
                 <Route path="/list" element={<ListScreen />} />
-                <Route path="/profile" element={null} />
+                <Route path="/profile" element={<ProfileScreen />} />
             </Routes>
         </Router>
     );

@@ -7,25 +7,36 @@ import mapIcon from "../assets/map.svg";
 import connection from "../assets/connection.svg";
 import { Link } from "react-router-dom";
 import { useLandmarks } from "../contexts/LandmarkContext.tsx";
+import { useAuth } from "../contexts/AuthContext.tsx";
 
 const ButtonBar = () => {
     const { isServerUp } = useLandmarks();
+    const { isAdmin } = useAuth();
     return (
         <div className="button-bar">
             <div className="top-buttons">
                 <Link to="/">
                     <img src={mapIcon} className="icon" alt="Free Roam" />
                 </Link>
-                <Link to="/add">
-                    <img src={plusIcon} className="icon" alt="Add Landmark" />
-                </Link>
-                <Link to="/update">
-                    <img
-                        src={minusIcon}
-                        className="icon"
-                        alt="Update/Delete Landmark"
-                    />
-                </Link>
+                {isAdmin && (
+                    <Link to="/add">
+                        <img
+                            src={plusIcon}
+                            className="icon"
+                            alt="Add Landmark"
+                        />
+                    </Link>
+                )}
+
+                {isAdmin && (
+                    <Link to="/update">
+                        <img
+                            src={minusIcon}
+                            className="icon"
+                            alt="Update/Delete Landmark"
+                        />
+                    </Link>
+                )}
                 <Link to="/list">
                     <img src={listIcon} className="icon" alt="Landmark List" />
                 </Link>

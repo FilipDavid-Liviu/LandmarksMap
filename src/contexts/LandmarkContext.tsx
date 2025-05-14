@@ -5,6 +5,13 @@ import React, {
     useEffect,
     useRef,
 } from "react";
+import {
+    isMatch,
+    isMatchName,
+    sortByDistanceToEquator,
+    sortByLatitude,
+    authFetch,
+} from "../components/Utils";
 const API_URL = "http://localhost:8000";
 
 export interface Landmark {
@@ -26,8 +33,15 @@ const LandmarkContext = createContext<{
         sort: number
     ) => Promise<void>;
     isServerUp: boolean;
-    fetchSearchedLandmarks: (search: string) => Promise<void>;
+    fetchSearchedLandmarks: (search: string, limit?: number) => Promise<void>;
     searched: Landmark[];
+    saveLandmark: (id: number) => Promise<void>;
+    unsaveLandmark: (id: number) => Promise<void>;
+    savedLandmarkIds: number[];
+    fetchSavedLandmarks: () => Promise<void>;
+    setSavedLandmarkIds: React.Dispatch<React.SetStateAction<number[]>>;
+    fetchMonitoredUsers: () => Promise<void>;
+    monitoredUsers: any[];
 }>({
     landmarks: [],
     addLandmark: () => {},
@@ -37,6 +51,13 @@ const LandmarkContext = createContext<{
     isServerUp: false,
     fetchSearchedLandmarks: async () => {},
     searched: [],
+    saveLandmark: async () => {},
+    unsaveLandmark: async () => {},
+    savedLandmarkIds: [],
+    fetchSavedLandmarks: async () => {},
+    setSavedLandmarkIds: () => {},
+    fetchMonitoredUsers: async () => {},
+    monitoredUsers: [],
 });
 
 export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -67,10 +88,11 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
             const serverIsUp = res.ok;
             if (!wasServerUpRef.current && serverIsUp) {
                 console.log("Server is up, fetching landmarks...");
-                const data = await fetch(`${API_URL}/get_all`);
+                const data = await fetch(`${API_URL}/get_landmarks/get_all`);
                 const landmarks = await data.json();
                 setLandmarks(landmarks);
                 console.log(landmarks);
+                fetchSavedLandmarks();
             }
             wasServerUpRef.current = serverIsUp;
             setIsServerUp(serverIsUp);
@@ -129,11 +151,11 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         localStorage.setItem("offlineQueue", JSON.stringify(queue));
     };
-    const handleOfflineOperation = (op: Operation) => {
-        setIsServerUp(false);
+    // const handleOfflineOperation = (op: Operation) => {
+    //     setIsServerUp(false);
 
-        enqueueOperation(op);
-    };
+    //     enqueueOperation(op);
+    // };
 
     useEffect(() => {
         if (!isServerUp) {
@@ -173,9 +195,11 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         try {
-            const res = await fetch(`${API_URL}/add`, {
+            const res = await authFetch(`${API_URL}/landmarks/add`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                },
                 body: JSON.stringify({
                     lat: landmark.lat,
                     lng: landmark.lng,
@@ -192,8 +216,8 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
                 const formData = new FormData();
                 formData.append("file", landmark.image);
 
-                const photoRes = await fetch(
-                    `${API_URL}/upload_photo/${newLandmark.id}`,
+                const photoRes = await authFetch(
+                    `${API_URL}/photos/upload/${newLandmark.id}`,
                     {
                         method: "POST",
                         body: formData,
@@ -210,12 +234,12 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
             setLandmarks((prev) => [...prev, newLandmark]);
         } catch (err) {
             console.error(err);
-            const op: Operation = {
-                type: "add",
-                landmark: landmark,
-            };
-            setLandmarks((prev) => [...prev, landmark]);
-            handleOfflineOperation(op);
+            // const op: Operation = {
+            //     type: "add",
+            //     landmark: landmark,
+            // };
+            // setLandmarks((prev) => [...prev, landmark]);
+            // handleOfflineOperation(op);
         }
     };
 
@@ -227,7 +251,7 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         try {
-            const res = await fetch(`${API_URL}/delete/${id}`, {
+            const res = await authFetch(`${API_URL}/landmarks/delete/${id}`, {
                 method: "DELETE",
             });
 
@@ -236,14 +260,14 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
             setLandmarks((prev) => prev.filter((l) => l.id !== id));
         } catch (err) {
             console.error(err);
-            if (id >= 1) {
-                const op: Operation = {
-                    type: "delete",
-                    id: id,
-                };
-                setLandmarks((prev) => prev.filter((l) => l.id !== id));
-                handleOfflineOperation(op);
-            }
+            // if (id >= 1) {
+            //     const op: Operation = {
+            //         type: "delete",
+            //         id: id,
+            //     };
+            //     setLandmarks((prev) => prev.filter((l) => l.id !== id));
+            //     handleOfflineOperation(op);
+            // }
         }
     };
 
@@ -260,29 +284,31 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
             return;
         }
         try {
-            const res = await fetch(`${API_URL}/update/${landmark.id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    lat: landmark.lat,
-                    lng: landmark.lng,
-                    name: landmark.name,
-                    type: landmark.type,
-                    description: landmark.description,
-                }),
-            });
+            const res = await authFetch(
+                `${API_URL}/landmarks/update/${landmark.id}`,
+                {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        lat: landmark.lat,
+                        lng: landmark.lng,
+                        name: landmark.name,
+                        type: landmark.type,
+                        description: landmark.description,
+                    }),
+                }
+            );
 
             if (!res.ok) throw new Error("Failed to update landmark");
 
             const updated: Landmark = await res.json();
 
             if (landmark.image instanceof File) {
-                // If it's a File, upload it
                 const formData = new FormData();
                 formData.append("file", landmark.image);
 
-                const photoRes = await fetch(
-                    `${API_URL}/upload_photo/${updated.id}`,
+                const photoRes = await authFetch(
+                    `${API_URL}/photos/upload/${updated.id}`,
                     {
                         method: "POST",
                         body: formData,
@@ -296,12 +322,10 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
                     throw new Error("Failed to upload image");
                 }
             } else if (typeof landmark.image === "string") {
-                // If it's a string, just set the image URL (no upload)
                 updated.image = landmark.image;
             } else if (landmark.image === undefined) {
-                // If it's undefined, delete the photo
-                const deleteRes = await fetch(
-                    `${API_URL}/delete_photo/${updated.id}`,
+                const deleteRes = await authFetch(
+                    `${API_URL}/photos/delete/${updated.id}`,
                     {
                         method: "DELETE",
                     }
@@ -317,16 +341,16 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
             );
         } catch (err) {
             console.error(err);
-            if (landmark.id >= 1) {
-                const op: Operation = {
-                    type: "update",
-                    landmark: landmark,
-                };
-                setLandmarks((prev) =>
-                    prev.map((l) => (l.id === landmark.id ? landmark : l))
-                );
-                handleOfflineOperation(op);
-            }
+            // if (landmark.id >= 1) {
+            //     const op: Operation = {
+            //         type: "update",
+            //         landmark: landmark,
+            //     };
+            //     setLandmarks((prev) =>
+            //         prev.map((l) => (l.id === landmark.id ? landmark : l))
+            //     );
+            //     handleOfflineOperation(op);
+            // }
         }
     };
 
@@ -346,8 +370,8 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
         if (sort !== 0) params.append("sort", sort.toString());
 
         try {
-            const res = await fetch(
-                `${API_URL}/get_all_name_type_sort?${params.toString()}`
+            const res = await authFetch(
+                `${API_URL}/get_landmarks/get_all_name_type_sort?${params.toString()}`
             );
             const data = await res.json();
             setSearched(data);
@@ -375,40 +399,29 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     };
 
-    const isMatch = (landmark: any, search: string) => {
-        const query = search.toLowerCase();
-        const nameType = (landmark.name + " " + landmark.type).toLowerCase();
-        const typeName = (landmark.type + " " + landmark.name).toLowerCase();
-        return nameType.includes(query) || typeName.includes(query);
-    };
-    const sortByLatitude = (landmarks: any) => {
-        return landmarks.slice().sort((a: any, b: any) => b.lat - a.lat);
-    };
-    const sortByDistanceToEquator = (landmarks: any) => {
-        return landmarks
-            .slice()
-            .sort((a: any, b: any) => Math.abs(b.lat) - Math.abs(a.lat));
-    };
-
-    const fetchSearchedLandmarks = async (search: string): Promise<void> => {
+    const fetchSearchedLandmarks = async (
+        search: string,
+        limit: number = 5
+    ): Promise<void> => {
         if (!isServerUp) {
-            const filteredLandmarks = getSearch(search);
+            const filteredLandmarks = getSearch(search).slice(0, limit);
             setSearched(filteredLandmarks);
             return;
         }
         const params = new URLSearchParams();
         if (search) params.append("search", search);
+        params.append("limit", limit.toString());
 
         try {
-            const res = await fetch(
-                `${API_URL}/get_all_name?${params.toString()}`
+            const res = await authFetch(
+                `${API_URL}/get_landmarks/get_all_name?${params.toString()}`
             );
             const data = await res.json();
             setSearched(data);
         } catch (err) {
             console.error(err);
             setIsServerUp(false);
-            const filteredLandmarks = getSearch(search);
+            const filteredLandmarks = getSearch(search).slice(0, limit);
             setSearched(filteredLandmarks);
         }
     };
@@ -418,10 +431,66 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
         );
         return filteredLandmarks;
     };
-    const isMatchName = (landmark: any, search: string) => {
-        const query = search.toLowerCase();
-        const nameType = landmark.name.toLowerCase();
-        return nameType.includes(query);
+
+    const [savedLandmarkIds, setSavedLandmarkIds] = useState<number[]>([]);
+
+    const fetchSavedLandmarks = async () => {
+        try {
+            const res = await authFetch(`${API_URL}/saved_landmarks/get_saved`);
+            if (!res.ok) throw new Error("Failed to fetch saved landmarks");
+            const data = await res.json();
+            setSavedLandmarkIds(data.saved_landmarks);
+        } catch (err) {
+            console.error("Error fetching saved landmarks:", err);
+        }
+    };
+
+    const saveLandmark = async (id: number) => {
+        try {
+            const res = await authFetch(
+                `${API_URL}/saved_landmarks/save/${id}`,
+                {
+                    method: "POST",
+                }
+            );
+            if (!res.ok) throw new Error("Failed to save landmark");
+            setSavedLandmarkIds((prev) => [...new Set([...prev, id])]);
+        } catch (err) {
+            console.error("Error saving landmark:", err);
+        }
+    };
+
+    const unsaveLandmark = async (id: number) => {
+        try {
+            const res = await authFetch(
+                `${API_URL}/saved_landmarks/unsave/${id}`,
+                {
+                    method: "POST",
+                }
+            );
+            if (!res.ok) throw new Error("Failed to unsave landmark");
+            setSavedLandmarkIds((prev) => prev.filter((lid) => lid !== id));
+        } catch (err) {
+            console.error("Error unsaving landmark:", err);
+        }
+    };
+
+    const [monitoredUsers, setMonitoredUsers] = useState<any[]>([]);
+    const fetchMonitoredUsers = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch(`${API_URL}/admin/monitored-users`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            if (!res.ok) throw new Error("Failed to fetch monitored users");
+            const data = await res.json();
+            setMonitoredUsers(data.monitored_users);
+        } catch (err) {
+            console.error("Error fetching monitored users:", err);
+        }
     };
 
     return (
@@ -435,6 +504,13 @@ export const LandmarkProvider: React.FC<{ children: React.ReactNode }> = ({
                 isServerUp,
                 fetchSearchedLandmarks,
                 searched,
+                saveLandmark,
+                unsaveLandmark,
+                savedLandmarkIds,
+                fetchSavedLandmarks,
+                setSavedLandmarkIds,
+                fetchMonitoredUsers,
+                monitoredUsers,
             }}
         >
             {children}

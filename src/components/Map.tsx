@@ -16,14 +16,15 @@ import { useMarker } from "../contexts/MarkerContext";
 import { useLandmarks } from "../contexts/LandmarkContext";
 import { useState } from "react";
 import { useSelectedMarker } from "../contexts/SelectedMarkerContext";
-import { useSelectedSearch } from "../contexts/SelectedSearchContext";
+import { useSelectedLocation } from "../contexts/SelectedLocationContext";
+import MarkerClusterGroup from "react-leaflet-cluster";
 
 type MapProps = {};
 
 const Map: React.FC<MapProps> = () => {
-    const { landmarks } = useLandmarks();
+    const { landmarks, savedLandmarkIds } = useLandmarks();
     const { selectedMarker, setSelectedMarker } = useSelectedMarker();
-    const { selectedSearch, setSelectedSearch } = useSelectedSearch();
+    const { selectedLocation, setSelectedLocation } = useSelectedLocation();
 
     const markerIcon = L.icon({
         iconUrl: "./src/assets/marker.svg",
@@ -33,6 +34,12 @@ const Map: React.FC<MapProps> = () => {
     });
     const selectedMarkerIcon = L.icon({
         iconUrl: "./src/assets/marker2.svg",
+        iconSize: [24, 24],
+        iconAnchor: [11, 24],
+        popupAnchor: [0, -30],
+    });
+    const savedMarkerIcon = L.icon({
+        iconUrl: "./src/assets/marker3.svg",
         iconSize: [24, 24],
         iconAnchor: [11, 24],
         popupAnchor: [0, -30],
@@ -67,10 +74,10 @@ const Map: React.FC<MapProps> = () => {
     } | null>(null);
 
     useEffect(() => {
-        if (selectedSearch) {
-            setSelectedPosition(selectedSearch);
+        if (selectedLocation) {
+            setSelectedPosition(selectedLocation);
         }
-    }, [selectedSearch]);
+    }, [selectedLocation]);
 
     const MapController = ({
         position,
@@ -96,7 +103,7 @@ const Map: React.FC<MapProps> = () => {
                         );
                         const timeout = setTimeout(() => {
                             setPosition(null);
-                            setSelectedSearch(null);
+                            setSelectedLocation(null);
                         }, 500);
                         return () => clearTimeout(timeout);
                     } else {
@@ -152,47 +159,50 @@ const Map: React.FC<MapProps> = () => {
                     />
                 </LayersControl.BaseLayer>
             </LayersControl>
-
-            {landmarks.map((landmark) => (
-                <Marker
-                    key={landmark.id}
-                    position={[landmark.lat, landmark.lng]}
-                    icon={
-                        selectedMarker?.id === landmark.id
-                            ? selectedMarkerIcon
-                            : markerIcon
-                    }
-                    eventHandlers={{
-                        click: () => {
-                            if (location.pathname !== "/add") {
-                                setSelectedPosition({
-                                    lat: landmark.lat,
-                                    lng: landmark.lng,
-                                });
-                                setSelectedMarker({
-                                    id: landmark.id,
-                                    lat: landmark.lat,
-                                    lng: landmark.lng,
-                                    name: landmark.name,
-                                    type: landmark.type,
-                                    description: landmark.description,
-                                    image: landmark.image,
-                                });
-                            }
-                        },
-                    }}
-                >
-                    {location.pathname !== "/" && (
-                        <Popup>
-                            {landmark.name} ({landmark.type}):
-                            <span style={{ fontWeight: "500" }}>
-                                {" "}
-                                {landmark.description}
-                            </span>
-                        </Popup>
-                    )}
-                </Marker>
-            ))}
+            <MarkerClusterGroup chunkedLoading>
+                {landmarks.map((landmark) => (
+                    <Marker
+                        key={landmark.id}
+                        position={[landmark.lat, landmark.lng]}
+                        icon={
+                            selectedMarker?.id === landmark.id
+                                ? selectedMarkerIcon
+                                : savedLandmarkIds.includes(landmark.id)
+                                ? savedMarkerIcon
+                                : markerIcon
+                        }
+                        eventHandlers={{
+                            click: () => {
+                                if (location.pathname !== "/add") {
+                                    setSelectedPosition({
+                                        lat: landmark.lat,
+                                        lng: landmark.lng,
+                                    });
+                                    setSelectedMarker({
+                                        id: landmark.id,
+                                        lat: landmark.lat,
+                                        lng: landmark.lng,
+                                        name: landmark.name,
+                                        type: landmark.type,
+                                        description: landmark.description,
+                                        image: landmark.image,
+                                    });
+                                }
+                            },
+                        }}
+                    >
+                        {location.pathname !== "/" && (
+                            <Popup>
+                                {landmark.name} ({landmark.type}):
+                                <span style={{ fontWeight: "500" }}>
+                                    {" "}
+                                    {landmark.description}
+                                </span>
+                            </Popup>
+                        )}
+                    </Marker>
+                ))}
+            </MarkerClusterGroup>
             {markerPosition && (
                 <Marker position={markerPosition} icon={selectedMarkerIcon}>
                     <Popup>Position for the new Landmark</Popup>

@@ -2,19 +2,20 @@ import { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import "./SearchBar.css";
 import { useLandmarks } from "../contexts/LandmarkContext";
-import { useSelectedSearch } from "../contexts/SelectedSearchContext";
+import { useSelectedLocation } from "../contexts/SelectedLocationContext.tsx";
 import { useSelectedMarker } from "../contexts/SelectedMarkerContext";
+import { isMatchName } from "../components/Utils";
 
 const SearchBar = () => {
     const [search, setSearch] = useState("");
     const [showDropdown, setShowDropdown] = useState(false);
 
     const { searched, fetchSearchedLandmarks } = useLandmarks();
-    const { setSelectedSearch } = useSelectedSearch();
+    const { setSelectedLocation } = useSelectedLocation();
     const { setSelectedMarker } = useSelectedMarker();
 
     useEffect(() => {
-        fetchSearchedLandmarks(search);
+        fetchSearchedLandmarks(search, 4);
     }, [search]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -23,7 +24,7 @@ const SearchBar = () => {
                 const match = searched[0];
                 setSearch(match.name);
                 setShowDropdown(false);
-                setSelectedSearch(match);
+                setSelectedLocation(match);
                 setSelectedMarker(match);
             } else {
                 const match = searched.find(
@@ -34,7 +35,7 @@ const SearchBar = () => {
                 if (match) {
                     setSearch(match.name);
                     setShowDropdown(false);
-                    setSelectedSearch(match);
+                    setSelectedLocation(match);
                     setSelectedMarker(match);
                 }
             }
@@ -49,13 +50,9 @@ const SearchBar = () => {
                     onChange={(e) => {
                         const newQuery = e.target.value;
                         setSearch(newQuery);
-                        const newFilteredSuggestions = searched
-                            .filter((landmark) =>
-                                landmark.name
-                                    .toLowerCase()
-                                    .includes(newQuery.toLowerCase())
-                            )
-                            .slice(0, 3);
+                        const newFilteredSuggestions = searched.filter(
+                            (landmark) => isMatchName(landmark, newQuery)
+                        );
                         setShowDropdown(
                             newQuery.length > 0 &&
                                 newFilteredSuggestions.length > 0
@@ -86,7 +83,7 @@ const SearchBar = () => {
                             onClick={() => {
                                 setSearch(landmark.name);
                                 setShowDropdown(false);
-                                setSelectedSearch(landmark);
+                                setSelectedLocation(landmark);
                                 setSelectedMarker(landmark);
                             }}
                         >

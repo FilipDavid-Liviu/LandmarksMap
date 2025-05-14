@@ -212,3 +212,94 @@ label,
     font-size: 16px;
     font-weight: bold;
 }
+
+.full-screen-container .auth-button {
+    width: 100px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid #000;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    font-size: 16px;
+    text-align: center;
+    cursor: pointer;
+    padding: 0.5rem 0.5rem;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.full-screen-container .auth-button:active {
+    transform: scale(0.95);
+    box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.2);
+    background-color: #ece9d5;
+}
+
+.full-screen-container .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.full-screen-container .auth-input {
+    width: 66.67%;
+    height: 24px;
+    padding: 6px 10px;
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid #000;
+    font-size: 18px;
+    font-weight: 400;
+}
+
+.full-screen-container .auth-toggle-text {
+    margin-top: 2rem;
+}
+
+.full-screen-container .auth-form-container {
+    width: 400px;
+    min-height: 240px;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.full-screen-container .monitored-list {
+    list-style-type: none;
+    display: flex;
+    flex-direction: column;
+    max-height: 30vh;
+    height: 95%;
+    padding: 0 0;
+    margin: 0 0;
+    overflow: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+    /* border: 2px solid black; */
+    border-radius: 10px;
+}
+
+.full-screen-container .error-message {
+    padding-top: 8px;
+    color: red;
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0;
+    transition: opacity 0.2s ease;
+    max-width: 200px;
+}
+
+.full-screen-container .error-message.inv {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.full-screen-container .landmark-item.clickable {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.full-screen-container .landmark-item.clickable:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}

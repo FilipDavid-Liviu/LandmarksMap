@@ -4,38 +4,51 @@ import { Landmark } from "../contexts/LandmarkContext";
 import { X } from "lucide-react";
 import "./InfoCard.css";
 import { decimalToDMS } from "./Utils";
+import { useLandmarks } from "../contexts/LandmarkContext.tsx";
+import { useAuth } from "../contexts/AuthContext";
 
 const InfoCard = () => {
     const [showInfo, setShowInfo] = useState(false);
     const { selectedMarker, setSelectedMarker } = useSelectedMarker();
     const [landmark, setLandmark] = useState<Landmark | null>(null);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const { isAuthenticated } = useAuth();
     useEffect(() => {
         if (selectedMarker) {
-            setShowInfo(true);
+            let objectUrl: string | null = null;
+
+            if (selectedMarker.image instanceof File) {
+                objectUrl = URL.createObjectURL(selectedMarker.image);
+                setImageUrl(objectUrl);
+            } else if (typeof selectedMarker.image === "string") {
+                setImageUrl(selectedMarker.image);
+            } else {
+                setImageUrl(null);
+            }
+
             setLandmark(selectedMarker);
+            setShowInfo(true);
+
+            return () => {
+                if (objectUrl) URL.revokeObjectURL(objectUrl);
+            };
         } else {
             setShowInfo(false);
+            setLandmark(null);
+            setImageUrl(null);
         }
     }, [selectedMarker]);
 
-    useEffect(() => {
-        let objectUrl: string | null = null;
+    const { savedLandmarkIds, saveLandmark, unsaveLandmark } = useLandmarks();
 
-        if (landmark?.image instanceof File) {
-            objectUrl = URL.createObjectURL(landmark.image);
-            setImageUrl(objectUrl);
-        } else if (typeof landmark?.image === "string") {
-            setImageUrl(landmark.image);
+    const handleToggleSave = () => {
+        if (!landmark) return;
+        if (savedLandmarkIds.includes(landmark.id)) {
+            unsaveLandmark(landmark.id);
         } else {
-            setImageUrl(null);
+            saveLandmark(landmark.id);
         }
-
-        return () => {
-            if (objectUrl) URL.revokeObjectURL(objectUrl);
-        };
-    }, [landmark]);
-
+    };
     return (
         <div className={`infocard ${showInfo ? "infocard--active" : ""}`}>
             <div className="infocard__image-placeholder">
@@ -64,7 +77,6 @@ const InfoCard = () => {
                     </div>
                 )}
             </div>
-
             <div className="infocard__section">
                 <div className="infocard__descriptiontitle">Description</div>
                 <div className="infocard__description">
@@ -78,6 +90,17 @@ const InfoCard = () => {
                     setShowInfo(false);
                 }}
             />
+            {isAuthenticated && (
+                <img
+                    src={
+                        landmark && savedLandmarkIds.includes(landmark.id)
+                            ? "./src/assets/bookmark2.svg"
+                            : "./src/assets/bookmark1.svg"
+                    }
+                    className="infocard__save-icon"
+                    onClick={handleToggleSave}
+                />
+            )}
         </div>
     );
 };
