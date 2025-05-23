@@ -4,6 +4,7 @@ import "./FullScreen.css";
 import { useAuth } from "../contexts/AuthContext";
 import { useLandmarks } from "../contexts/LandmarkContext.tsx";
 import { useSelectedMarker } from "../contexts/SelectedMarkerContext.tsx";
+import { useSelectedLocation } from "../contexts/SelectedLocationContext.tsx";
 
 const itemsPerPage = 8;
 export const ProfileScreen: React.FC = () => {
@@ -69,9 +70,11 @@ export const ProfileScreen: React.FC = () => {
     const displayedLandmarks = saved.slice(startIndex, endIndex);
 
     const { setSelectedMarker } = useSelectedMarker();
+    const { setSelectedLocation } = useSelectedLocation();
     const navigate = useNavigate();
     const handleLandmarkClick = (landmark: any) => {
         setSelectedMarker(landmark);
+        setSelectedLocation(landmark);
         navigate("/");
     };
 

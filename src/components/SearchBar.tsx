@@ -19,26 +19,12 @@ const SearchBar = () => {
     }, [search]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "Enter") {
-            if (searched.length === 1) {
-                const match = searched[0];
-                setSearch(match.name);
-                setShowDropdown(false);
-                setSelectedLocation(match);
-                setSelectedMarker(match);
-            } else {
-                const match = searched.find(
-                    (landmark) =>
-                        landmark.name.toLowerCase() === search.toLowerCase()
-                );
-
-                if (match) {
-                    setSearch(match.name);
-                    setShowDropdown(false);
-                    setSelectedLocation(match);
-                    setSelectedMarker(match);
-                }
-            }
+        if (e.key === "Enter" && searched.length > 0) {
+            const match = searched[0];
+            setSearch(match.name);
+            setShowDropdown(false);
+            setSelectedLocation(match);
+            setSelectedMarker(match);
         }
     };
     return (
